@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  pseudo    String    @unique
+  fullName  String?
+  avatarUrl String?
+  birthdate DateTime?
+  createdAt DateTime  @default(now())
+
+  // Relations
+  friends                String[]          @default([])
+  sentFriendRequests     FriendRequest[]   @relation("SentFriendRequests")
+  receivedFriendRequests FriendRequest[]   @relation("ReceivedFriendRequests")
+  sentMessages           Message[]         @relation("SentMessages")
+  receivedMessages       Message[]         @relation("ReceivedMessages")
+  ownedGroups            Group[]           @relation("OwnedGroups")
+  groupMemberships       GroupMembership[]
+  uploadedFiles          File[]            @relation("UploadedFiles")
+}
+
+model FriendRequest {
+  id         String              @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     FriendRequestStatus @default(PENDING)
+  createdAt  DateTime            @default(now())
+
+  sender   User @relation("SentFriendRequests", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedFriendRequests", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  content    String
+  imageUrl   String?
+  senderId   String
+  receiverId String?
+  groupId    String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  sender   User   @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User?  @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  group    Group? @relation(fields: [groupId], references: [id])
+  File     File[]
+}
+
+model Group {
+  id        String   @id @default(uuid())
+  name      String
+  isPublic  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  ownerId   String
+
+  // Relations
+  owner    User              @relation("OwnedGroups", fields: [ownerId], references: [id])
+  members  GroupMembership[]
+  messages Message[]
+}
+
+model GroupMembership {
+  id       String    @id @default(uuid())
+  groupId  String
+  userId   String
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+
+  // Relations
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+model File {
+  id           String  @id @default(uuid())
+  url          String
+  uploadedById String
+  messageId    String?
+
+  // Relations
+  uploadedBy User     @relation("UploadedFiles", fields: [uploadedById], references: [id])
+  message    Message? @relation(fields: [messageId], references: [id])
+}
+
+enum Status {
+  ONLINE
+  OCCUPIED
+  OFFLINE
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum GroupRole {
+  MEMBER
+  ADMIN
+}
