@@ -40,6 +40,7 @@ exports.getGroupListPage = asyncHandler(async (req, res, next) => {
         contains: groupName,
         mode: "insensitive",
       },
+      isPublic: true,
     },
   });
 
