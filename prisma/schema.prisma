@@ -14,13 +14,14 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  hash      String
-  pseudo    String    @unique
-  avatarUrl String?
-  birthdate DateTime?
-  createdAt DateTime  @default(now())
+  id          String    @id @default(uuid())
+  email       String    @unique
+  hash        String
+  pseudo      String    @unique
+  avatarUrl   String?
+  birthdate   DateTime?
+  createdAt   DateTime  @default(now())
+  fakeAccount Boolean   @default(false)
 
   // Relations
   friends                String[]          @default([])
