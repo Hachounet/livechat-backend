@@ -51,13 +51,33 @@ exports.postSignupPage = [
       if (err) {
         return next(err);
       }
-      await prisma.user.create({
+      const newUser = await prisma.user.create({
         data: {
           email: req.body.email,
           pseudo: req.body.pseudo,
           hash: hashedPassword,
+          birthdate: req.body.birthdate,
         },
       });
+
+      const fakeFriends = await prisma.user.findMany({
+        where: {
+          fakeAccount: true,
+        },
+      });
+
+      const friendshipRequests = fakeFriends.map((fakeFriend) => {
+        return prisma.friendRequest.create({
+          data: {
+            senderId: newUser.id,
+            receiverId: fakeFriend.id,
+            status: "ACCEPTED",
+          },
+        });
+      });
+
+      await Promise.all(friendshipRequests);
+
       return res
         .status(200)
         .json({ success: true, message: "Account successfully created !" });
