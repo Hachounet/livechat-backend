@@ -1,8 +1,8 @@
 const { Router } = require("express");
-const passport = require("passport");
+const { authenticateJWT } = require("../auth/passport");
 
 const searchRouter = Router();
 
-searchRouter.get("/users?query=xyz", getUsersListPage);
+searchRouter.get("/users?query=xyz", authenticateJWT, getUsersListPage);
 
-searchRouter.get("/groups?query=xyz", getGroupListPage);
+searchRouter.get("/groups?query=xyz", authenticateJWT, getGroupListPage);
