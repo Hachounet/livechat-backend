@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const passport = require("passport");
-
+const { authenticateJWT } = require("../auth/passport");
 const {
   sendFriendRequest,
   acceptOrDenyFriendRequest,
@@ -9,8 +9,7 @@ const {
 
 const friendsRouter = Router();
 
-friendsRouter.post("/request/:id", sendFriendRequest);
+friendsRouter.post("/request/:id", authenticateJWT, sendFriendRequest);
+friendsRouter.put("/request/:id", authenticateJWT, acceptOrDenyFriendRequest);
 
-friendsRouter.put("/request/:id", acceptOrDenyFriendRequest);
-
-friendsRouter.get("/requests", getFriendsRequests);
+friendsRouter.get("/requests", authenticateJWT, getFriendsRequests);
