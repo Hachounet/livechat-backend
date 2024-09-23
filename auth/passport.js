@@ -1,9 +1,6 @@
 require("dotenv").config();
 const { ExtractJwt, Strategy } = require("passport-jwt");
 const passport = require("passport");
-const { PrismaClient } = require("@prisma/client");
-
-const prisma = new PrismaClient();
 
 const options = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -12,13 +9,12 @@ const options = {
 
 passport.use(
   "jwt",
-  new Strategy(options, async (payload, done) => {
+  new Strategy(options, (payload, done) => {
     try {
-      const user = await prisma.user.findUnique({ where: { id: payload.id } });
-      if (user) return done(null, user);
-      else return done(null, false);
+      // No check with the DB if signature && expiracy are correct. Could bring some issues with a deleted user by example.
+      return done(null, payload);
     } catch (err) {
-      return done(err);
+      return done(err, false);
     }
   }),
 );
