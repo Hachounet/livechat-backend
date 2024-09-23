@@ -20,4 +20,9 @@ module.exports = {
   USERNAME_JAVASCRIPT: "Username cannot contain Javascript code.",
   USERNAME_INVALID_CHARS:
     "Username can only contain alphanumeric characters, dashes and underscores.",
+  RECORD_NOT_FOUND: "The requested resource could not be found.",
+  UNAUTHORIZED: "You are not authorized to perform this action.",
+  FORBIDDEN: "You do not have the required permissions.",
+  TOKEN_EXPIRED: "Your session has expired. Please log in again.",
+  INVALID_TOKEN: "Invalid authentication token.",
 };
