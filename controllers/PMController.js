@@ -39,6 +39,49 @@ exports.postPrivateMessageOneFriend = asyncHandler(async (req, res, next) => {
     .json({ success: true, message: "Message sent !", newMessage });
 });
 
+exports.postImageOneFriend = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+  const receiverId = req.params.receiverId;
+
+  const receiver = await prisma.user.findUnique({
+    where: {
+      id: receiverId,
+    },
+  });
+
+  if (!receiver) {
+    return res.status(404).json({ success: false, message: "User not found." });
+  }
+
+  if (!req.file) {
+    return res
+      .status(400)
+      .json({ success: false, message: "No file uploaded." });
+  }
+
+  const fileUrl = req.file.path;
+  const fileName = req.file.filename;
+
+  const newFile = await prisma.file.create({
+    data: {
+      url: fileUrl,
+      uploaderId: userId,
+      cloudinaryId: fileName,
+    },
+  });
+
+  const newMessage = await prisma.message.create({
+    data: {
+      content: "",
+      fileId: newFile.id,
+      senderId: userId,
+      receiverId: receiverId,
+    },
+  });
+
+  return res.status(200).json({ success: true, newMessage });
+});
+
 exports.getPrivateMessagesOneFriend = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
   const receiverId = req.params.receiverId;
@@ -70,6 +113,9 @@ exports.getPrivateMessagesOneFriend = asyncHandler(async (req, res, next) => {
     },
     orderBy: {
       createdAt: "asc", // Tri par date de création
+    },
+    include: {
+      file: true,
     },
   });
 
