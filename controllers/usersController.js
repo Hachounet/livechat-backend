@@ -30,12 +30,12 @@ exports.getUsersInfosPage = asyncHandler(async (req, res, next) => {
 // Update user info page
 exports.updateUserInfosPage = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
-  const { email, pseudo, avatarUrl, birthdate } = req.body;
+  const { email, pseudo, birthdate } = req.body;
 
   try {
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { email, pseudo, avatarUrl, birthdate },
+      data: { email, pseudo, birthdate },
     });
 
     return res.status(201).json({ success: true, message: "Profile updated." });
@@ -44,6 +44,29 @@ exports.updateUserInfosPage = asyncHandler(async (req, res, next) => {
       .status(400)
       .json({ success: false, message: errorMessage.UPDATE_FAILED });
   }
+});
+
+exports.updateAvatarUserPage = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+
+  if (!req.file) {
+    return res
+      .status(400)
+      .json({ success: false, message: "No file uploaded." });
+  }
+
+  const avatarUrl = req.file.path;
+
+  await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      avatarUrl: avatarUrl,
+    },
+  });
+
+  res.status(201).json({ success: true, avatarUrl });
 });
 
 // Delete user page
