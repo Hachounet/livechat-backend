@@ -27,4 +27,6 @@ module.exports = {
   FORBIDDEN: "You do not have the required permissions.",
   TOKEN_EXPIRED: "Your session has expired. Please log in again.",
   INVALID_TOKEN: "Invalid authentication token.",
+  DELETE_FAILED: "Deletion failed.",
+  UPDATE_FAILED: "Data update failed.",
 };
