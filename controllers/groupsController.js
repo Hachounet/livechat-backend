@@ -326,7 +326,7 @@ exports.deleteGroup = asyncHandler(async (req, res, next) => {
 exports.sendMessageGroupPage = asyncHandler(async (req, res, next) => {
   const groupId = req.params.groupId;
   const userId = req.user.id;
-  const { content, imageUrl } = req.body;
+  const { content } = req.body;
 
   const group = await prisma.group.findUnique({
     where: { id: groupId },
@@ -354,7 +354,6 @@ exports.sendMessageGroupPage = asyncHandler(async (req, res, next) => {
   const newMessage = await prisma.message.create({
     data: {
       content,
-      imageUrl,
       senderId: userId,
       groupId,
     },
@@ -397,10 +396,68 @@ exports.getMessagesGroupPage = asyncHandler(async (req, res, next) => {
   const messages = await prisma.message.findMany({
     where: { groupId },
     orderBy: { createdAt: "asc" },
+    include: {
+      file: true,
+    },
   });
 
   return res.status(200).json({
     success: true,
     messages,
   });
+});
+
+exports.sendFileMessage = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+  const groupId = req.params.groupId;
+
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+  });
+
+  if (!group) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Group not found." });
+  }
+
+  const membership = await prisma.groupMembership.findUnique({
+    where: {
+      groupId_userId: { groupId, userId },
+    },
+  });
+
+  if (!membership) {
+    return res.status(403).json({
+      success: false,
+      message: "You are not a member of this group.",
+    });
+  }
+
+  if (!req.file) {
+    return res
+      .status(400)
+      .json({ success: false, message: "No file uploaded." });
+  }
+
+  const fileUrl = req.file.path;
+  const fileName = req.file.filename;
+
+  const newFile = await prisma.file.create({
+    data: {
+      url: fileUrl,
+      uploaderId: userId,
+      cloudinaryId: fileName,
+    },
+  });
+
+  const newMessage = await prisma.message.create({
+    data: {
+      groupId,
+      senderId: userId,
+      fileId: newFile.id,
+    },
+  });
+
+  return res.status(200).json({ success: true, newMessage });
 });
