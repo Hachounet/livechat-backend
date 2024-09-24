@@ -1,14 +1,16 @@
 const { Router } = require("express");
-const passport = require("passport");
+const { authenticateJWT } = require("../auth/passport");
 
 const usersRouter = Router();
 
-usersRouter.get("/:id", getUsersInfosPage);
+usersRouter.get("/", authenticateJWT, getUsersInfosPage);
 
-usersRouter.put("/:id", updateUserInfosPage);
+usersRouter.put("/", authenticateJWT, updateUserInfosPage);
 
-usersRouter.delete("/:id", deleteUserPage);
+usersRouter.delete("/delete", authenticateJWT, deleteUserPage);
 
-usersRouter.get("/:id/friends", getUserFriendsPage);
+usersRouter.get("/friends", authenticateJWT, getUserFriendsPage);
 
-usersRouter.put("/:id/status", updateUserStatusPage);
+usersRouter.put("/status", authenticateJWT, updateUserStatusPage);
+
+usersRouter.put("/password", authenticateJWT, updatePasswordUser);
