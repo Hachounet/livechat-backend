@@ -32,6 +32,7 @@ model User {
   ownedGroups            Group[]           @relation("OwnedGroups")
   groupMemberships       GroupMembership[]
   uploadedFiles          File[]            @relation("UploadedFiles")
+  GroupRequest           GroupRequest[]
 }
 
 model FriendRequest {
@@ -71,9 +72,23 @@ model Group {
   ownerId   String
 
   // Relations
-  owner    User              @relation("OwnedGroups", fields: [ownerId], references: [id])
-  members  GroupMembership[]
-  messages Message[]
+  owner         User              @relation("OwnedGroups", fields: [ownerId], references: [id])
+  members       GroupMembership[]
+  messages      Message[]
+  groupRequests GroupRequest[]
+}
+
+model GroupRequest {
+  id        String             @id @default(uuid())
+  groupId   String
+  userId    String
+  status    GroupRequestStatus @default(PENDING)
+  createdAt DateTime           @default(now())
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
 }
 
 model GroupMembership {
@@ -86,6 +101,8 @@ model GroupMembership {
   // Relations
   group Group @relation(fields: [groupId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
 }
 
 model File {
@@ -106,6 +123,12 @@ enum Status {
 }
 
 enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum GroupRequestStatus {
   PENDING
   ACCEPTED
   REJECTED
