@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -32,7 +29,7 @@ model User {
   ownedGroups            Group[]           @relation("OwnedGroups")
   groupMemberships       GroupMembership[]
   uploadedFiles          File[]            @relation("UploadedFiles")
-  GroupRequest           GroupRequest[]
+  groupRequests          GroupRequest[]
 }
 
 model FriendRequest {
@@ -51,17 +48,17 @@ model FriendRequest {
 model Message {
   id         String   @id @default(uuid())
   content    String
-  imageUrl   String?
   senderId   String
   receiverId String?
   groupId    String?
   createdAt  DateTime @default(now())
 
   // Relations
-  sender   User   @relation("SentMessages", fields: [senderId], references: [id])
-  receiver User?  @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  group    Group? @relation(fields: [groupId], references: [id])
-  File     File[]
+  sender   User    @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User?   @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  group    Group?  @relation(fields: [groupId], references: [id])
+  file     File?   @relation(fields: [fileId], references: [id]) // Référence vers le fichier
+  fileId   String? @unique // Référence vers un fichier
 }
 
 model Group {
@@ -106,14 +103,25 @@ model GroupMembership {
 }
 
 model File {
-  id           String  @id @default(uuid())
+  id           String   @id @default(uuid())
   url          String
-  uploadedById String
-  messageId    String?
+  uploaderId   String
+  messageId    String?  @unique
+  fileType     FileType @default(IMAGE)
+  createdAt    DateTime @default(now())
+  cloudinaryId String?
 
   // Relations
-  uploadedBy User     @relation("UploadedFiles", fields: [uploadedById], references: [id])
-  message    Message? @relation(fields: [messageId], references: [id])
+  uploadedBy User @relation("UploadedFiles", fields: [uploaderId], references: [id])
+
+  Message Message?
+}
+
+enum FileType {
+  AVATAR
+  IMAGE
+  VIDEO
+  DOCUMENT
 }
 
 enum Status {
