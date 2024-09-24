@@ -1,22 +1,26 @@
 const { Router } = require("express");
-const passport = require("passport");
+const { authenticateJWT } = require("../auth/passport");
+const { isAdmin } = require("../auth/groupAdminMiddleware");
 
 const groupsRouter = Router();
 
-groupsRouter.post("/createnewgroup", createNewGroup);
+groupsRouter.post("/createnewgroup", authenticateJWT, createNewGroup);
 
-groupsRouter.get("/public", searchPublicGroups);
+groupsRouter.put("/edit/:groupId", authenticateJWT, isAdmin, editGroup);
 
-groupsRouter.put("/edit/:groupId", editGroup);
+groupsRouter.post(
+  "/invite/:groupId/:userId",
+  authenticateJWT,
+  isAdmin,
+  inviteGroup,
+);
 
-groupsRouter.post("/invite", inviteGroup);
+groupsRouter.post("/join/:groupId", authenticateJWT, joinGroup);
 
-groupsRouter.post("/join/:groupId", joinGroup);
+groupsRouter.delete("/leave/:groupId", authenticateJWT, leaveGroup);
 
-groupsRouter.delete("/leave/:groupId", leaveGroup);
+groupsRouter.delete("/delete/:groupId", authenticateJWT, isAdmin, deleteGroup);
 
-groupsRouter.delete("/delete/:groupId", deleteGroup);
+groupsRouter.post("/messages/:groupId", authenticateJWT, sendMessageGroupPage);
 
-groupsRouter.post("/messages/:groupId", sendMessageGroupPage);
-
-groupsRouter.get("/messages/:groupId", getMessagesGroupPage);
+groupsRouter.get("/messages/:groupId", authenticateJWT, getMessagesGroupPage);
