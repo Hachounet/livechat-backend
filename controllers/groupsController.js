@@ -407,7 +407,7 @@ exports.getMessagesGroupPage = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.sendFileMessage = asyncHandler(async (req, res, next) => {
+exports.sendFileGroupPage = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
   const groupId = req.params.groupId;
 

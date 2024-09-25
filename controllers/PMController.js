@@ -1,7 +1,6 @@
-const { Router } = require("express");
 const { PrismaClient } = require("@prisma/client");
+const asyncHandler = require("express-async-handler");
 const prisma = new PrismaClient();
-const PMRouter = Router();
 
 exports.postPrivateMessageOneFriend = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
