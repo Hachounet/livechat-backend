@@ -9,7 +9,6 @@ const helmet = require("helmet");
 const cors = require("cors");
 
 const authRouter = require("./routes/authRouter");
-const filesRouter = require("./routes/filesRouter");
 const friendsRouter = require("./routes/friendsRouter");
 const groupsRouter = require("./routes/groupsRouter");
 const PMRouter = require("./routes/PMRouter");
@@ -44,7 +43,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/auth", authRouter);
-app.use("/files", filesRouter);
 app.use("/friends", friendsRouter);
 app.use("/groups", groupsRouter);
 app.use("/messages", PMRouter);
