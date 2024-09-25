@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const { authenticateJWT } = require("../auth/passport");
 const { isAdmin } = require("../auth/groupAdminMiddleware");
-
+const uploadMiddleware = require("../upload/uploadMiddleware");
 const {
   createNewGroup,
   editGroup,
@@ -49,3 +49,5 @@ groupsRouter.post(
   uploadMiddleware("imgs").single("img"),
   sendFileGroupPage,
 ); // Only img - no text
+
+module.exports = groupsRouter;

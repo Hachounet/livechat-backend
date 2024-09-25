@@ -18,3 +18,5 @@ PMRouter.post(
 );
 
 PMRouter.get("/:receiverId", getPrivateMessagesOneFriend);
+
+module.exports = PMRouter;

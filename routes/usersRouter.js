@@ -32,3 +32,5 @@ usersRouter.get("/friends", authenticateJWT, getUserFriendsPage);
 usersRouter.put("/status", authenticateJWT, updateUserStatusPage);
 
 usersRouter.put("/password", authenticateJWT, updatePasswordUser);
+
+module.exports = usersRouter;

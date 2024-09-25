@@ -66,4 +66,4 @@ const validateSignUp = [
     }),
 ];
 
-module.exports = { validateSignUp };
+module.exports = validateSignUp;

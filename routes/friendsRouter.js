@@ -13,3 +13,5 @@ friendsRouter.post("/request/:id", authenticateJWT, sendFriendRequest);
 friendsRouter.put("/request/:id", authenticateJWT, acceptOrDenyFriendRequest);
 
 friendsRouter.get("/requests", authenticateJWT, getFriendsRequests);
+
+module.exports = friendsRouter;

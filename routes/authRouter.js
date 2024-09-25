@@ -1,5 +1,4 @@
 const { Router } = require("express");
-const passport = require("passport");
 
 const {
   postLoginPage,
@@ -11,3 +10,5 @@ const authRouter = Router();
 authRouter.post("/login", postLoginPage);
 
 authRouter.post("/signup", postSignUpPage);
+
+module.exports = authRouter;
