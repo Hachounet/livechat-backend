@@ -105,7 +105,7 @@ exports.getFriendsRequests = asyncHandler(async (req, res, next) => {
 
   const friendsRequests = await prisma.friendRequest.findMany({
     where: {
-      OR: [{ sendId: userId }, { receiverId: userId }],
+      OR: [{ senderId: userId }, { receiverId: userId }],
     },
     include: {
       sender: {

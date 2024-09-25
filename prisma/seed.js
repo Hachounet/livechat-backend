@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const { DateTime } = require("luxon");
 const prisma = new PrismaClient();
 
 async function main() {
@@ -59,6 +60,16 @@ async function main() {
             receiverId: createdUsers[j].id,
             status: "ACCEPTED",
           },
+        });
+
+        await prisma.user.update({
+          where: { id: createdUsers[i].id },
+          data: { friends: { push: createdUsers[j].id } },
+        });
+
+        await prisma.user.update({
+          where: { id: createdUsers[j].id },
+          data: { friends: { push: createdUsers[i].id } },
         });
       }
     }

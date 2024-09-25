@@ -6,7 +6,7 @@ const errorMessage = require("../errorMessages");
 
 exports.getUsersListPage = asyncHandler(async (req, res, next) => {
   const userName = req.query.query;
-
+  console.log(userName);
   if (!userName) {
     return res
       .status(400)
@@ -22,7 +22,7 @@ exports.getUsersListPage = asyncHandler(async (req, res, next) => {
     },
   });
 
-  return res.status(200).json({ success: true, users });
+  return res.status(200).json({ success: true, userName, users });
 });
 
 exports.getGroupListPage = asyncHandler(async (req, res, next) => {

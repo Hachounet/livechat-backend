@@ -2,6 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const asyncHandler = require("express-async-handler");
 const { validationResult, body } = require("express-validator");
+const { DateTime } = require("luxon");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const errorMessages = require("../errorMessages");
@@ -80,14 +81,14 @@ exports.postLoginPage = asyncHandler(async (req, res, next) => {
   });
 
   if (!user) {
-    errors.push({ msg: errorMessage.INVALID_EMAIL });
+    errors.push({ msg: errorMessages.INVALID_EMAIL });
   }
 
   let isPasswordValid = true;
   if (user) {
     isPasswordValid = await bcryptjs.compare(req.body.pw, user.hash);
     if (!isPasswordValid) {
-      errors.push({ msg: errorMessage.INVALID_PASSWORD });
+      errors.push({ msg: errorMessages.INVALID_PASSWORD });
     }
   }
 
@@ -114,12 +115,13 @@ exports.postSignUpPage = [
       if (err) {
         return next(err);
       }
+
       const newUser = await prisma.user.create({
         data: {
           email: req.body.email,
           pseudo: req.body.pseudo,
           hash: hashedPassword,
-          birthdate: req.body.birthdate,
+          birthdate: new Date(req.body.birthdate),
         },
       });
 
@@ -140,6 +142,22 @@ exports.postSignUpPage = [
       });
 
       await Promise.all(friendshipRequests);
+
+      // Update friends array for newUser and each fakeFriend
+      await Promise.all(
+        fakeFriends.map((fakeFriend) => {
+          return Promise.all([
+            prisma.user.update({
+              where: { id: newUser.id },
+              data: { friends: { push: fakeFriend.id } },
+            }),
+            prisma.user.update({
+              where: { id: fakeFriend.id },
+              data: { friends: { push: newUser.id } },
+            }),
+          ]);
+        }),
+      );
 
       return res
         .status(200)

@@ -8,8 +8,12 @@ const {
 
 const searchRouter = Router();
 
-searchRouter.get("/users?query=xyz", authenticateJWT, getUsersListPage);
+searchRouter.get("/", (req, res) => {
+  res.status(200).json({ message: "iuhaozdih" });
+});
 
-searchRouter.get("/groups?query=xyz", authenticateJWT, getGroupListPage);
+searchRouter.get("/users", authenticateJWT, getUsersListPage);
+
+searchRouter.get("/groups", authenticateJWT, getGroupListPage);
 
 module.exports = searchRouter;

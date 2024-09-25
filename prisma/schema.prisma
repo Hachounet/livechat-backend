@@ -39,8 +39,8 @@ model FriendRequest {
   status     FriendRequestStatus @default(PENDING)
   createdAt  DateTime            @default(now())
 
-  sender   User @relation("SentFriendRequests", fields: [senderId], references: [id])
-  receiver User @relation("ReceivedFriendRequests", fields: [receiverId], references: [id])
+  sender   User @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
 
   @@unique([senderId, receiverId])
 }
@@ -54,9 +54,9 @@ model Message {
   createdAt  DateTime @default(now())
 
   // Relations
-  sender   User    @relation("SentMessages", fields: [senderId], references: [id])
-  receiver User?   @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  group    Group?  @relation(fields: [groupId], references: [id])
+  sender   User    @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User?   @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  group    Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   file     File?   @relation(fields: [fileId], references: [id]) // Référence vers le fichier
   fileId   String? @unique // Référence vers un fichier
 }
@@ -69,7 +69,7 @@ model Group {
   ownerId   String
 
   // Relations
-  owner         User              @relation("OwnedGroups", fields: [ownerId], references: [id])
+  owner         User              @relation("OwnedGroups", fields: [ownerId], references: [id], onDelete: Cascade)
   members       GroupMembership[]
   messages      Message[]
   groupRequests GroupRequest[]
@@ -82,8 +82,8 @@ model GroupRequest {
   status    GroupRequestStatus @default(PENDING)
   createdAt DateTime           @default(now())
 
-  group Group @relation(fields: [groupId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId])
 }
@@ -96,8 +96,8 @@ model GroupMembership {
   joinedAt DateTime  @default(now())
 
   // Relations
-  group Group @relation(fields: [groupId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId])
 }
@@ -112,7 +112,7 @@ model File {
   cloudinaryId String?
 
   // Relations
-  uploadedBy User @relation("UploadedFiles", fields: [uploaderId], references: [id])
+  uploadedBy User @relation("UploadedFiles", fields: [uploaderId], references: [id], onDelete: Cascade)
 
   Message Message?
 }
