@@ -2,7 +2,6 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const asyncHandler = require("express-async-handler");
 const { validationResult, body } = require("express-validator");
-const { DateTime } = require("luxon");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const errorMessages = require("../errorMessages");
@@ -17,20 +16,6 @@ function checkForJSAttack(value) {
     throw new Error(
       "Username can only contain alphanumeric characters, dashes and underscores.",
     );
-  }
-  return true;
-}
-
-function validateBirthdate(value) {
-  const birthdate = DateTime.fromISO(value);
-  const today = DateTime.now();
-  const age = today.diff(birthdate, "years").years;
-
-  if (!birthdate.isValid) {
-    throw new Error(errorMessages.INVALID_DATE);
-  }
-  if (age < 13) {
-    throw new Error(errorMessages.UNDERAGE);
   }
   return true;
 }
@@ -52,10 +37,6 @@ const validateSignUp = [
     .normalizeEmail()
     .isEmail()
     .withMessage(`${errorMessages.MAIL_FORMAT}`),
-  body("birthdate")
-    .notEmpty()
-    .withMessage(`Birthdate ${errorMessages.NOT_EMPTY}`)
-    .custom(validateBirthdate),
   body("pw")
     .notEmpty()
     .withMessage(`Password ${errorMessages.NOT_EMPTY}`)
@@ -97,7 +78,7 @@ exports.postLoginPage = asyncHandler(async (req, res, next) => {
   }
 
   const accessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
+    expiresIn: "8h",
   });
 
   return res.status(200).json({ message: "User logged in", accessToken });
@@ -121,7 +102,6 @@ exports.postSignUpPage = [
           email: req.body.email,
           pseudo: req.body.pseudo,
           hash: hashedPassword,
-          birthdate: new Date(req.body.birthdate),
         },
       });
 
