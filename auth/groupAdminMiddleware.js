@@ -8,7 +8,7 @@ exports.isAdmin = asyncHandler(async (req, res, next) => {
 
   const group = await prisma.group.findUnique({
     where: {
-      id: req.groupId,
+      id: groupId,
     },
   });
 
