@@ -11,14 +11,14 @@ datasource db {
 }
 
 model User {
-  id          String    @id @default(uuid())
-  email       String    @unique
+  id          String   @id @default(uuid())
+  email       String   @unique
   hash        String
-  pseudo      String    @unique
+  pseudo      String   @unique
   avatarUrl   String?
-  birthdate   DateTime?
-  createdAt   DateTime  @default(now())
-  fakeAccount Boolean   @default(false)
+  createdAt   DateTime @default(now())
+  fakeAccount Boolean  @default(false)
+  status      Status   @default(OFFLINE)
 
   // Relations
   friends                String[]          @default([])
@@ -126,7 +126,6 @@ enum FileType {
 
 enum Status {
   ONLINE
-  OCCUPIED
   OFFLINE
 }
 

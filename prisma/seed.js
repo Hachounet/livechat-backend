@@ -7,32 +7,10 @@ async function main() {
     {
       email: "fakealice@fakemail.com",
       pseudo: "Fake_Alice",
-      birthdate: "2010-01-01",
     },
     {
       email: "fakebob@fakeemail.com",
       pseudo: "Fake_Bob",
-      birthdate: "2009-01-01",
-    },
-    {
-      email: "faketarzan@fakeemail.com",
-      pseudo: "Fake_Tarzan",
-      birthdate: "2008-01-01",
-    },
-    {
-      email: "fakejane@fakeemail.com",
-      pseudo: "Fake_Jane",
-      birthdate: "2007-01-01",
-    },
-    {
-      email: "fakebuzz@fakeemail.com",
-      pseudo: "Fake_Buzz",
-      birthdate: "2006-01-01",
-    },
-    {
-      email: "fakealex@fakeemail.com",
-      pseudo: "Fake_Alex",
-      birthdate: "2005-01-01",
     },
   ];
 
@@ -43,7 +21,6 @@ async function main() {
           email: user.email,
           pseudo: user.pseudo,
           hash: "fakehash1234",
-          birthdate: DateTime.fromISO(user.birthdate).toISO(),
           fakeAccount: true,
         },
       }),

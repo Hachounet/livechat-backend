@@ -13,8 +13,8 @@ exports.getUsersInfosPage = asyncHandler(async (req, res, next) => {
     select: {
       email: true,
       pseudo: true,
-      avatarUrl: true, // Fix: added true to select fields
-      birthdate: true,
+      avatarUrl: true,
+      id: true,
     },
   });
 
@@ -30,20 +30,33 @@ exports.getUsersInfosPage = asyncHandler(async (req, res, next) => {
 // Update user info page
 exports.updateUserInfosPage = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
-  const { email, pseudo, birthdate } = req.body;
+  const { email, pseudo } = req.body;
 
-  try {
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: { email, pseudo, birthdate },
+  if (pseudo) {
+    const existingUser = await prisma.user.findUnique({
+      where: { pseudo },
     });
 
-    return res.status(201).json({ success: true, message: "Profile updated." });
-  } catch (error) {
+    if (existingUser && existingUser.id !== userId) {
+      return res.status(400).json({
+        success: false,
+        message: "This pseudo is already taken.",
+      });
+    }
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { email, pseudo },
+  });
+
+  if (!user) {
     return res
       .status(400)
       .json({ success: false, message: errorMessage.UPDATE_FAILED });
   }
+
+  return res.status(201).json({ success: true, message: "Profile updated." });
 });
 
 exports.updateAvatarUserPage = asyncHandler(async (req, res, next) => {
@@ -66,7 +79,9 @@ exports.updateAvatarUserPage = asyncHandler(async (req, res, next) => {
     },
   });
 
-  res.status(201).json({ success: true, avatarUrl });
+  res
+    .status(201)
+    .json({ success: true, avatarUrl, message: "Avatar uploaded." });
 });
 
 // Delete user page
@@ -86,9 +101,9 @@ exports.deleteUserPage = asyncHandler(async (req, res, next) => {
   }
 });
 
-// Get user friends page (pending implementation)
 exports.getUserFriendsPage = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
+  const groupId = req.params.groupId || null; // Rendre groupId optionnel
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -111,7 +126,19 @@ exports.getUserFriendsPage = asyncHandler(async (req, res, next) => {
       id: true,
       pseudo: true,
       avatarUrl: true,
-      email: true,
+      status: true,
+
+      ...(groupId && {
+        groupRequests: {
+          where: {
+            groupId: groupId,
+            status: { in: ["PENDING", "ACCEPTED"] },
+          },
+          select: {
+            status: true,
+          },
+        },
+      }),
     },
   });
 
@@ -119,32 +146,35 @@ exports.getUserFriendsPage = asyncHandler(async (req, res, next) => {
 });
 
 exports.updateUserStatusPage = asyncHandler(async (req, res, next) => {
+  const { status } = req.body;
   const userId = req.user.id;
-  const { liveStatus } = req.body;
 
-  const validStatuses = ["ONLINE", "OCCUPIED", "OFFLINE"];
-  if (!validStatuses.includes(liveStatus)) {
+  if (!status || (status !== "ONLINE" && status !== "OFFLINE")) {
     return res
       .status(400)
-      .json({ success: false, message: "Invalid status provided." });
+      .json({ message: 'Status must be either "ONLINE" or "OFFLINE"' });
   }
 
-  const status = await prisma.user.update({
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { status: status },
+  });
+
+  const friends = await prisma.user.findMany({
     where: {
-      id: userId,
-    },
-    data: {
-      status: liveStatus,
+      id: { in: updatedUser.friends },
     },
     select: {
-      status,
+      id: true,
     },
   });
 
-  return res.status(201).json({
-    success: true,
-    message: "Status updated !",
-    status: status.status,
+  return res.status(200).json({
+    message: "Status updated successfully",
+    user: {
+      id: updatedUser.id,
+      status: updatedUser.status,
+    },
   });
 });
 

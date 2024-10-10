@@ -1,6 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const asyncHandler = require("express-async-handler");
 const prisma = new PrismaClient();
+// const { io } = require("../app");
 
 exports.postPrivateMessageOneFriend = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
@@ -27,11 +28,18 @@ exports.postPrivateMessageOneFriend = asyncHandler(async (req, res, next) => {
 
   const newMessage = await prisma.message.create({
     data: {
-      sendId: userId,
+      senderId: userId,
       receiverId: receiverId,
       content: message,
     },
   });
+
+  // io.emit("newPrivateMessage", {
+  //   senderId: newMessage.senderId,
+  //   receiverId: newMessage.receiverId,
+  //   content: newMessage.content,
+  //   timestamp: newMessage.createdAt,
+  // });
 
   return res
     .status(201)
@@ -78,7 +86,20 @@ exports.postImageOneFriend = asyncHandler(async (req, res, next) => {
     },
   });
 
-  return res.status(200).json({ success: true, newMessage });
+  const createdMessageWithFile = await prisma.message.findUnique({
+    where: {
+      id: newMessage.id,
+    },
+    include: {
+      file: true, // Inclut les détails du fichier
+    },
+  });
+
+  return res.status(200).json({
+    success: true,
+    newMessage: createdMessageWithFile,
+    userId: req.user.id,
+  });
 });
 
 exports.getPrivateMessagesOneFriend = asyncHandler(async (req, res, next) => {
@@ -88,6 +109,9 @@ exports.getPrivateMessagesOneFriend = asyncHandler(async (req, res, next) => {
   const receiver = await prisma.user.findUnique({
     where: {
       id: receiverId,
+    },
+    select: {
+      pseudo: true,
     },
   });
 
@@ -111,15 +135,23 @@ exports.getPrivateMessagesOneFriend = asyncHandler(async (req, res, next) => {
       ],
     },
     orderBy: {
-      createdAt: "asc", // Tri par date de création
+      createdAt: "asc", 
     },
     include: {
       file: true,
+
+      receiver: {
+        select: {
+          pseudo: true,
+        },
+      },
     },
   });
 
   return res.status(200).json({
     success: true,
     messages: previousMessages,
+    userId: req.user.id,
+    receiverPseudo: receiver,
   });
 });

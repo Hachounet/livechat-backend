@@ -19,7 +19,7 @@ usersRouter.get("/", authenticateJWT, getUsersInfosPage);
 usersRouter.put("/", authenticateJWT, updateUserInfosPage);
 
 usersRouter.put(
-  "/",
+  "/avatar",
   authenticateJWT,
   uploadMiddleware("avatars").single("avatar"),
   updateAvatarUserPage,
@@ -27,7 +27,7 @@ usersRouter.put(
 
 usersRouter.delete("/delete", authenticateJWT, deleteUserPage);
 
-usersRouter.get("/friends", authenticateJWT, getUserFriendsPage);
+usersRouter.get("/friends/:groupId", authenticateJWT, getUserFriendsPage);
 
 usersRouter.put("/status", authenticateJWT, updateUserStatusPage);
 

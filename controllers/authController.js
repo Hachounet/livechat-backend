@@ -77,11 +77,22 @@ exports.postLoginPage = asyncHandler(async (req, res, next) => {
     return res.status(400).json({ errors });
   }
 
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      status: "ONLINE",
+    },
+  });
+
   const accessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
     expiresIn: "8h",
   });
 
-  return res.status(200).json({ message: "User logged in", accessToken });
+  return res
+    .status(200)
+    .json({ message: "User logged in", accessToken, userId: user.id });
 });
 
 exports.postSignUpPage = [

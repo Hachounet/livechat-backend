@@ -1,18 +1,82 @@
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient, GroupRequestStatus } = require("@prisma/client");
 const prisma = new PrismaClient();
 const asyncHandler = require("express-async-handler");
 
 const errorMessage = require("../errorMessages");
+
+exports.getAllGroupsRequests = asyncHandler(async (req, res, next) => {
+  //Only give groupRequests related to current user.
+  // This is not the controller for an group admin looking to check previously send invitation to another user
+  const userId = req.user.id;
+
+  const groupRequests = await prisma.groupRequest.findMany({
+    where: {
+      userId: userId,
+    },
+    select: {
+      group: {
+        select: {
+          id: true,
+          name: true,
+          isPublic: true,
+        },
+      },
+      status: true,
+    },
+  });
+
+  return res
+    .status(200)
+    .json({ success: true, userId: userId, groupRequests: groupRequests });
+});
+
+exports.getAllGroups = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+
+  const groupMemberships = await prisma.groupMembership.findMany({
+    where: {
+      userId: userId,
+    },
+    select: {
+      group: {
+        select: {
+          id: true,
+          name: true,
+          ownerId: true,
+          isPublic: true,
+          groupRequests: {
+            where: {
+              userId: userId,
+            },
+            select: {
+              userId: true,
+              status: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return res
+    .status(200)
+    .json({ success: true, userId: userId, groupMemberships });
+});
 
 exports.createNewGroup = asyncHandler(async (req, res, next) => {
   const groupName = req.body.groupName;
   const isPublic = req.body.isPublic;
   const userId = req.user.id;
 
-  if (!groupName || groupName.trim().length === 0) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Group name cannot be empty." });
+  if (
+    !groupName ||
+    groupName.trim().length < 3 ||
+    groupName.trim().length > 20
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Group name must be between 3 and 20 characters.",
+    });
   }
 
   const newGroup = await prisma.group.create({
@@ -23,13 +87,25 @@ exports.createNewGroup = asyncHandler(async (req, res, next) => {
     },
   });
 
-  return res
-    .status(201)
-    .json({ success: true, message: "Group created.", newGroup });
+  const newMembership = await prisma.groupMembership.create({
+    data: {
+      groupId: newGroup.id,
+      userId: userId,
+      role: "ADMIN",
+    },
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: "Group created.",
+    newGroup,
+    newMembership,
+  });
 });
 
 exports.editGroup = asyncHandler(async (req, res, next) => {
   const groupId = req.params.groupId;
+
   const { isPublic, groupName } = req.body;
 
   const editedGroup = await prisma.group.update({
@@ -82,7 +158,7 @@ exports.inviteGroup = asyncHandler(async (req, res, next) => {
     data: {
       groupId: groupId,
       userId: invitedUserId,
-      status: "PENDING",
+      status: GroupRequestStatus.PENDING,
     },
   });
 
@@ -130,14 +206,9 @@ exports.getInvitationGroups = asyncHandler(async (req, res, next) => {
 });
 
 exports.postCancelInvitationsPage = asyncHandler(async (req, res, next) => {
-  const { choice, invitedUserId } = req.body;
+  const invitedUserId = req.params.invitedUserId;
+  const userId = req.user.id;
   const groupId = req.params.groupId;
-
-  if (choice !== "REJECTED") {
-    return res
-      .status(400)
-      .json({ success: false, message: "Choice is not correct value type." });
-  }
 
   const group = await prisma.group.findUnique({
     where: {
@@ -151,9 +222,10 @@ exports.postCancelInvitationsPage = asyncHandler(async (req, res, next) => {
       message: "You are not allowed to manage invitations for this group.",
     });
   }
+
   const invitation = await prisma.groupRequest.findUnique({
     where: {
-      groupId_invitedUserId: { groupId, userId: invitedUserId },
+      groupId_userId: { groupId, userId: invitedUserId },
     },
   });
 
@@ -162,19 +234,56 @@ exports.postCancelInvitationsPage = asyncHandler(async (req, res, next) => {
       .status(404)
       .json({ success: false, message: "Invitation not found." });
   }
-  const updatedInvitation = await prisma.groupRequest.update({
+
+  await prisma.groupRequest.delete({
     where: {
-      id: invitation.id,
-    },
-    data: {
-      status: choice,
+      groupId_userId: { groupId, userId: invitedUserId },
     },
   });
 
   return res.status(200).json({
     success: true,
-    message: `Invitation has been ${choice}.`,
-    updatedInvitation,
+    message: "Invitation has been successfully deleted.",
+  });
+});
+
+exports.excludeGroupMember = asyncHandler(async (req, res, next) => {
+  const groupId = req.params.groupId;
+  const excludedMemberId = req.params.userId;
+  const userId = req.user.id;
+
+  const memberToExclude = await prisma.groupMembership.findFirst({
+    where: {
+      groupId: groupId,
+      userId: excludedMemberId,
+    },
+  });
+
+  if (!memberToExclude) {
+    return res
+      .status(404)
+      .json({ message: "User is not a member of this group" });
+  }
+
+  await prisma.groupMembership.delete({
+    where: {
+      groupId_userId: {
+        userId: excludedMemberId,
+        groupId: groupId,
+      },
+    },
+  });
+
+  await prisma.groupRequest.deleteMany({
+    where: {
+      groupId: groupId,
+      userId: excludedMemberId,
+    },
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "User successfully excluded from the group",
   });
 });
 
@@ -245,6 +354,36 @@ exports.joinGroup = asyncHandler(async (req, res, next) => {
   });
 });
 
+exports.denyGroup = asyncHandler(async (req, res, next) => {
+  const groupId = req.params.groupId;
+  const userId = req.user.id;
+
+  const request = await prisma.groupRequest.findFirst({
+    where: {
+      groupId: groupId,
+      userId: userId,
+      status: "PENDING",
+    },
+  });
+
+  if (!request) {
+    return res.status(404).json({
+      success: false,
+      message: "You have no pending invitation for this group.",
+    });
+  } else {
+    await prisma.groupRequest.delete({
+      where: {
+        id: request.id,
+      },
+    });
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Invitation denied." });
+  }
+});
+
 exports.leaveGroup = asyncHandler(async (req, res, next) => {
   const groupId = req.params.groupId;
   const userId = req.user.id;
@@ -285,32 +424,14 @@ exports.leaveGroup = asyncHandler(async (req, res, next) => {
 });
 
 exports.deleteGroup = asyncHandler(async (req, res, next) => {
-  const groupId = req.params.id;
-  const userId = req.user.id;
-
-  const group = await prisma.group.findUnique({
-    where: { id: groupId },
-  });
-
-  if (!group) {
-    return res
-      .status(404)
-      .json({ success: false, message: "Group not found." });
-  }
-
-  if (group.ownerId !== userId) {
-    return res.status(403).json({
-      success: false,
-      message: "You are not authorized to delete this group.",
-    });
-  }
+  const groupId = req.params.groupId;
 
   await prisma.message.deleteMany({
-    where: { groupId },
+    where: { groupId: groupId },
   });
 
   await prisma.groupMembership.deleteMany({
-    where: { groupId },
+    where: { groupId: groupId },
   });
 
   await prisma.group.delete({
@@ -372,6 +493,7 @@ exports.getMessagesGroupPage = asyncHandler(async (req, res, next) => {
 
   const group = await prisma.group.findUnique({
     where: { id: groupId },
+    select: { name: true, isPublic: true },
   });
 
   if (!group) {
@@ -394,16 +516,38 @@ exports.getMessagesGroupPage = asyncHandler(async (req, res, next) => {
   }
 
   const messages = await prisma.message.findMany({
-    where: { groupId },
+    where: { groupId: groupId },
     orderBy: { createdAt: "asc" },
     include: {
       file: true,
     },
   });
 
+  const users = await prisma.group.findUnique({
+    where: {
+      id: groupId,
+    },
+    select: {
+      members: {
+        select: {
+          user: {
+            select: {
+              id: true,
+              pseudo: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
   return res.status(200).json({
     success: true,
-    messages,
+    userId: userId,
+    messages: messages,
+    group: group,
+    users: users,
   });
 });
 
@@ -453,11 +597,25 @@ exports.sendFileGroupPage = asyncHandler(async (req, res, next) => {
 
   const newMessage = await prisma.message.create({
     data: {
-      groupId,
+      content: "",
+      groupId: groupId,
       senderId: userId,
       fileId: newFile.id,
     },
   });
 
-  return res.status(200).json({ success: true, newMessage });
+  const createdMessageWithFile = await prisma.message.findUnique({
+    where: {
+      id: newMessage.id,
+    },
+    include: {
+      file: true,
+    },
+  });
+
+  return res.status(200).json({
+    success: true,
+    newMessage: createdMessageWithFile,
+    userId: req.user.id,
+  });
 });
