@@ -27,13 +27,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : ["http://localhost:5173"];
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS."));
-    }
-  },
+  origin: "https://livechat-frontend-theta.vercel.app/",
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   credentials: true,
   allowedHeaders: ["Authorization", "Content-Type"],
@@ -45,13 +39,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: (origin, callback) => {
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS."));
-      }
-    },
+    origin: "https://livechat-frontend-theta.vercel.app/",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
