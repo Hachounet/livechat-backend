@@ -27,19 +27,20 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : ["http://localhost:5173"];
 
 const corsOptions = {
-  origin: "https://livechat-frontend-theta.vercel.app/",
+  origin: "https://livechat-frontend-theta.vercel.app",
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   credentials: true,
   allowedHeaders: ["Authorization", "Content-Type"],
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "https://livechat-frontend-theta.vercel.app/",
+    origin: "https://livechat-frontend-theta.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
