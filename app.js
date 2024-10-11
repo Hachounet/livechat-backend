@@ -27,7 +27,10 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : ["http://localhost:5173"];
 
 const corsOptions = {
-  origin: "https://livechat-frontend-theta.vercel.app",
+  origin: [
+    "https://livechat-frontend-hachounet.onrender.com",
+    "https://www.livechat-frontend-hachounet.onrender.com",
+  ],
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   credentials: true,
   allowedHeaders: ["Authorization", "Content-Type"],
@@ -40,7 +43,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "https://livechat-frontend-theta.vercel.app",
+    origin: "https://livechat-frontend-hachounet.onrender.com",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
