@@ -97,7 +97,7 @@ io.on("connection", (socket) => {
 
   socket.on("joinRoom", async (token) => {
     userId = getUserIdFromToken(token);
-
+    console.log("User ID from token:", userId);
     if (userId) {
       socket.join(userId);
 
